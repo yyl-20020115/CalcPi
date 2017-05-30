@@ -287,9 +287,9 @@ namespace Ontology
 
 	public class LinearNumber : Number
 	{
-		public virtual bool IsOrigin { get; } = false;
+		public virtual bool IsZero { get; } = false;
 
-		public virtual bool IsNotNegative { get; } = true;
+		public virtual bool IsPositive { get; } = true;
 
 		public LinearNumber(params Existence[] existences)
 			: base(existences)
@@ -325,7 +325,9 @@ namespace Ontology
 
 		public readonly BigInteger Value = BigInteger.Zero;
 
-		public override bool IsNotNegative => this.Value >= 0;
+		public override bool IsPositive => this.Value > 0;
+
+		public override bool IsZero => this.Value.IsZero;
 
 		public override object NumberValue => this.Value;
 
@@ -346,7 +348,7 @@ namespace Ontology
 		public static new readonly Natural Zero = new Natural(0);
 		public static new readonly Natural One = new Natural(1);
 
-		public override bool IsNotNegative => true;
+		public override bool IsPositive => true;
 
 		public Natural(uint value = 0)
 			: this((BigInteger)value)
@@ -379,7 +381,9 @@ namespace Ontology
 
 		public readonly double Value = 0.0;
 
-		public override bool IsNotNegative => this.Value >= 0.0;
+		public override bool IsPositive => this.Value > 0.0;
+
+		public override bool IsZero => this.Value == 0.0;
 
 		public override object NumberValue => this.Value;
 
@@ -510,6 +514,10 @@ namespace Ontology
 	)]
 	public class Infinite : LinearNumber
 	{
+		public new virtual bool IsPositive { get; set; } = true;
+
+		public override bool IsZero => false;
+
 		public static readonly Infinite TheInfinite = new Infinite();
 
 		/// <summary>
@@ -520,13 +528,13 @@ namespace Ontology
 		/// <summary>
 		/// I is the value represents the rotated 1.
 		/// </summary>
-		public static LinearNumber I = IOP(Real.One);
+		public static LinearNumber I1 = IOP(Real.One);
 
 		/// <summary>
 		/// I^2 is the value represents the rotated rotated 1, 
 		/// this is -1.
 		/// </summary>
-		public static LinearNumber MinusOne = IOP(IOP(Real.One));
+		public static LinearNumber I2 = IOP(IOP(Real.One));
 
 		public static Infinite operator +(Infinite infinite, LinearNumber n)
 		{
@@ -540,7 +548,10 @@ namespace Ontology
 		{
 			return infinite;
 		}
-
+		public Infinite(bool IsPositive = true)
+		{
+			this.IsPositive = IsPositive;
+		}
 
 		public static implicit operator Zero(Infinite infinite)
 		{
@@ -553,7 +564,7 @@ namespace Ontology
 
 		public static implicit operator sbyte(Infinite infinity)
 		{
-			return infinity == null ? (sbyte)0 : (infinity.IsNotNegative ? sbyte.MaxValue : sbyte.MinValue);
+			return infinity == null ? (sbyte)0 : (infinity.IsPositive ? sbyte.MaxValue : sbyte.MinValue);
 		}
 
 		public static implicit operator ushort(Infinite infinity)
@@ -563,7 +574,7 @@ namespace Ontology
 
 		public static implicit operator short(Infinite infinity)
 		{
-			return infinity == null ? (short)0 : (infinity.IsNotNegative ? short.MaxValue : short.MinValue);
+			return infinity == null ? (short)0 : (infinity.IsPositive ? short.MaxValue : short.MinValue);
 		}
 
 		public static implicit operator uint(Infinite infinity)
@@ -573,7 +584,7 @@ namespace Ontology
 
 		public static implicit operator int(Infinite infinity)
 		{
-			return infinity == null ? (int)0 : (infinity.IsNotNegative ? int.MaxValue : int.MinValue);
+			return infinity == null ? (int)0 : (infinity.IsPositive ? int.MaxValue : int.MinValue);
 		}
 
 		public static implicit operator ulong(Infinite infinity)
@@ -583,22 +594,22 @@ namespace Ontology
 
 		public static implicit operator long(Infinite infinity)
 		{
-			return infinity == null ? (long)0 : (infinity.IsNotNegative ? long.MaxValue : long.MinValue);
+			return infinity == null ? (long)0 : (infinity.IsPositive ? long.MaxValue : long.MinValue);
 		}
 
 		public static implicit operator float(Infinite infinity)
 		{
-			return infinity == null ? float.Epsilon : (infinity.IsNotNegative ? float.PositiveInfinity : float.NegativeInfinity);
+			return infinity == null ? float.Epsilon : (infinity.IsPositive ? float.PositiveInfinity : float.NegativeInfinity);
 		}
 
 		public static implicit operator double(Infinite infinity)
 		{
-			return infinity == null ? double.Epsilon : (infinity.IsNotNegative ? double.PositiveInfinity : double.NegativeInfinity);
+			return infinity == null ? double.Epsilon : (infinity.IsPositive ? double.PositiveInfinity : double.NegativeInfinity);
 		}
 
 		public static implicit operator decimal(Infinite infinity)
 		{
-			return infinity == null ? decimal.Zero : (infinity.IsNotNegative ? decimal.MaxValue : decimal.MinValue);
+			return infinity == null ? decimal.Zero : (infinity.IsPositive ? decimal.MaxValue : decimal.MinValue);
 		}
 
 		public Infinite(params Existence[] existences)
@@ -616,7 +627,14 @@ namespace Ontology
 	)]
 	public class Zero : LinearNumber
 	{
-		public override bool IsOrigin => true;
+		public new virtual bool IsPositive { get; set; } = true;
+		
+		public override bool IsZero => true;
+
+		public Zero(bool IsPositive = true)
+		{
+			this.IsPositive = IsPositive;
+		}
 
 		public static readonly Zero TheZero = new Zero();
 
