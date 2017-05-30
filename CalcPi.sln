@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.6
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalcPi", "CalcPi\CalcPi.csproj", "{30C4031A-C0E5-4345-977B-0F2D06FF0B49}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Papers", "Papers", "{61549A51-689F-4351-AB70-5AA67DDBF0D1}"
+	ProjectSection(SolutionItems) = preProject
+		CalcPi\Papers\物理空间的结构.docx = CalcPi\Papers\物理空间的结构.docx
+		CalcPi\Papers\磁重力效应的实验研究_-_全尺寸SEG_测试.docx = CalcPi\Papers\磁重力效应的实验研究_-_全尺寸SEG_测试.docx
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{30C4031A-C0E5-4345-977B-0F2D06FF0B49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30C4031A-C0E5-4345-977B-0F2D06FF0B49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30C4031A-C0E5-4345-977B-0F2D06FF0B49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30C4031A-C0E5-4345-977B-0F2D06FF0B49}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
