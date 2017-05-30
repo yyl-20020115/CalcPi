@@ -35,7 +35,7 @@ namespace Ontology
 	/// of the natural order.
 	/// </summary>
 	[Aliases(
-		"Existence","存在"	
+		"Existence", "存在"
 	)]
 	public abstract class Existence : Object
 	{
@@ -72,7 +72,7 @@ namespace Ontology
 		/// <returns></returns>
 		public static bool operator ==(Existence e1, Existence e2)
 		{
-			return object.ReferenceEquals(e1,e2);
+			return object.ReferenceEquals(e1, e2);
 		}
 		/// <summary>
 		/// Existences do not equal when the are referencing same object,
@@ -93,7 +93,8 @@ namespace Ontology
 		/// <summary>
 		/// Existence is a set of existences
 		/// </summary>
-		public virtual ISet<Existence> Existences {
+		public virtual ISet<Existence> Existences
+		{
 			get => this.existences ?? (this.existences = new HashSet<Existence>());
 			set
 			{
@@ -134,10 +135,10 @@ namespace Ontology
 	/// Nature an existence that exists from unknown beginning.
 	/// </summary>
 	[Aliases(
-		"Nature","自然", 
+		"Nature", "自然",
 		"Tao", "道",
-		"Onto","本体",
-		"Limitless","无限"
+		"Onto", "本体",
+		"Limitless", "无限"
 	)]
 	public class Nature : Existence
 	{
@@ -157,7 +158,7 @@ namespace Ontology
 		public DateTime? Beginning = null;
 
 		public Nature(params Existence[] existences)
-			:base(existences)
+			: base(existences)
 		{
 
 		}
@@ -167,7 +168,7 @@ namespace Ontology
 	/// Being is a kind of Nature
 	/// </summary>
 	[Aliases(
-		"Being","有","存有"
+		"Being", "有", "存有"
 	)]
 	public class Being : Nature
 	{
@@ -190,12 +191,12 @@ namespace Ontology
 		/// Being Is Void: Void = Being
 		/// </summary>
 		/// <param name="being"></param>
-		public static implicit operator Void (Being being)
+		public static implicit operator Void(Being being)
 		{
 			return being == null ? null : new Void(being.Existences.ToArray());
 		}
 		public Being(params Existence[] existences)
-			:base(existences)
+			: base(existences)
 		{
 
 		}
@@ -217,7 +218,7 @@ namespace Ontology
 	/// Void is a kind of Nature
 	/// </summary>
 	[Aliases(
-		"Void","不存在","虚无"	
+		"Void", "不存在", "虚无"
 	)]
 	public class Void : Nature
 	{
@@ -235,18 +236,18 @@ namespace Ontology
 		{
 			return @void == null ? null : new Being(@void.Existences.ToArray());
 		}
-		
+
 		/// <summary>
 		/// Void Is Being: Void = Being
 		/// </summary>
 		/// <param name="being"></param>
-		public static implicit operator Being (Void @void)
+		public static implicit operator Being(Void @void)
 		{
 			return @void == null ? null : new Being(@void.Existences.ToArray());
 		}
 
 		public Void(params Existence[] existences)
-			:base(existences)
+			: base(existences)
 		{
 
 		}
@@ -272,35 +273,55 @@ namespace Ontology
 	/// NumberValue. This value is originally the count of 
 	/// the sub existences.
 	/// </summary>
-	[Aliases("Number","数")]
-	public abstract class Number: Being
+	[Aliases("Number", "数")]
+	public abstract class Number : Being
 	{
 		public virtual object NumberValue => this.Existences.Count;
+
 		public Number(params Existence[] existences)
-			:base(existences)
+			: base(existences)
 		{
 
 		}
 	}
 
-	[Aliases("SignedNumber","有符号数")]
-	public abstract class SignedNumber : Number
+	public class LinearNumber : Number
 	{
+		public virtual bool IsOrigin { get; } = false;
+
 		public virtual bool IsNotNegative { get; } = true;
 
-		public SignedNumber(params Existence[] existences)
-			:base(existences)
+		public LinearNumber(params Existence[] existences)
+			: base(existences)
 		{
 
 		}
 	}
+	public class StructuralNumber : Number
+	{
 
+	}
+
+	public class FiniteNumber: LinearNumber
+	{
+
+	}
 	[Aliases("Integer", "整数")]
-	public class Integer: SignedNumber
+	public class Integer : FiniteNumber
 	{
 		public static readonly Integer Zero = new Integer(0);
 		public static readonly Integer One = new Integer(1);
 		public static readonly Integer MinusOne = new Integer(-1);
+
+		public static implicit operator Real(Integer integer)
+		{
+			return integer == null ? null : new Real((double)integer.Value);
+		}
+
+		public static Infinite operator +(Integer integer, Infinite infinite)
+		{
+			return infinite;
+		}
 
 		public readonly BigInteger Value = BigInteger.Zero;
 
@@ -309,7 +330,7 @@ namespace Ontology
 		public override object NumberValue => this.Value;
 
 		public Integer(int value = 0)
-			:this((BigInteger)value)
+			: this((BigInteger)value)
 		{
 
 		}
@@ -319,12 +340,42 @@ namespace Ontology
 		}
 	}
 
+	[Aliases("Natural", "自然数")]
+	public class Natural : Integer
+	{
+		public static new readonly Natural Zero = new Natural(0);
+		public static new readonly Natural One = new Natural(1);
+
+		public override bool IsNotNegative => true;
+
+		public Natural(uint value = 0)
+			: this((BigInteger)value)
+		{
+
+		}
+		public Natural(BigInteger value)
+			: base(value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value)))
+		{
+		}
+	}
+
 	[Aliases("Real", "实数")]
-	public class Real : SignedNumber
+	public class Real : FiniteNumber
 	{
 		public static readonly Real Zero = new Real(0.0);
 		public static readonly Real One = new Real(1.0);
 		public static readonly Real MinusOne = new Real(-1.0);
+
+		public static explicit operator Integer(Real real)
+		{
+			return real == null ? null : new Integer((BigInteger)real.Value);
+		}
+
+
+		public static Infinite operator +(Real real, Infinite infinite)
+		{
+			return infinite;
+		}
 
 		public readonly double Value = 0.0;
 
@@ -339,14 +390,14 @@ namespace Ontology
 	}
 
 	[Aliases("Rational", "有理数")]
-	public class Rational: Real
+	public class Rational : Real
 	{
 		public readonly Real Numerator = Real.Zero;
 		public readonly Real Denominator = Real.One;
 
 		public Rational(Real Numerator = null, Real Denominator = null)
-			:base((Numerator =(Numerator ?? Real.Zero)).Value
-				 /((Denominator=(Denominator ?? Real.One)).Value))
+			: base((Numerator = (Numerator ?? Real.Zero)).Value
+				 / ((Denominator = (Denominator ?? Real.One)).Value))
 		{
 			this.Numerator = Numerator;
 			this.Denominator = Denominator;
@@ -368,38 +419,18 @@ namespace Ontology
 				? 1.0
 				: 1.0 + x / n * CalcE(n + 1, max, x);
 		}
-		public static Irrational Pi = new Irrational(CalcPi());
-		public static Irrational E = new Irrational(CalcE());
+		public static readonly Irrational Pi = new Irrational(CalcPi());
+		public static readonly Irrational E = new Irrational(CalcE());
 
 		public Irrational(double value = 0.0)
-			:base(value)
+			: base(value)
 		{
 
-		}
-	}
-
-
-	[Aliases("Natural","自然数")]
-	public class Natural: Integer
-	{
-		public static new readonly Natural Zero = new Natural(0);
-		public static new readonly Natural One = new Natural(1);
-
-		public override bool IsNotNegative => true;
-
-		public Natural(uint value = 0)
-			:this((BigInteger)value)
-		{
-
-		}
-		public Natural(BigInteger value)
-			:base(value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value)))
-		{
 		}
 	}
 
 	[Aliases("Complex", "复数", "实复数")]
-	public class Complex : Number
+	public class Complex : StructuralNumber
 	{
 		public static readonly Complex Zero = new Complex();
 		public static readonly Complex One = new Complex(Real.One);
@@ -411,12 +442,18 @@ namespace Ontology
 		/// This is real part
 		/// </summary>
 		[Aliases("Real", "实部", "LowDimension", "低维")]
-		public Real Real = Real.Zero;
+		public readonly Real Real = Real.Zero;
 		/// <summary>
 		/// This is imaginary part
 		/// </summary>
-		[Aliases("Imaginary","虚部", "HighDimension","高维")]
-		public Real Imaginary = Real.Zero;
+		[Aliases("Imaginary", "虚部", "HighDimension", "高维")]
+		public readonly Real Imaginary = Real.Zero;
+
+		public virtual Infinite FlatValue => this.Real + Infinite.TheInfinite * this.Imaginary;
+
+		public virtual Real Theta => new Real(Math.Atan2(this.Imaginary.Value, this.Real.Value));
+
+		public virtual Real Length => new Real(Math.Sqrt(this.Real.Value * this.Real.Value + this.Imaginary.Value * this.Imaginary.Value));
 
 		public Complex(Real Real = null, Real Imaginary = null)
 		{
@@ -426,46 +463,85 @@ namespace Ontology
 	}
 
 	[Aliases("NaturalComplex", "自然复数")]
-	public class NaturalComplex: Number
+	public class NaturalComplex : StructuralNumber
 	{
 		public static readonly NaturalComplex Zero = new NaturalComplex();
 		public static readonly NaturalComplex One = new NaturalComplex(Natural.One);
 		public static readonly NaturalComplex J = new NaturalComplex(Natural.Zero, Natural.One);
-		public static readonly NaturalComplex OneAndJ = new NaturalComplex(Natural.One,Natural.One);
+		public static readonly NaturalComplex OneAndJ = new NaturalComplex(Natural.One, Natural.One);
+
+		public static implicit operator Complex(NaturalComplex nc)
+		{
+			return nc == null ? null : new Complex(nc.Real, nc.Imaginary);
+		}
 
 		/// <summary>
 		/// This is real part
 		/// </summary>
-		[Aliases("Real","实部", "LowDimension","低维")]
-		public Natural Real = Natural.Zero;
+		[Aliases("Real", "实部", "LowDimension", "低维")]
+		public readonly Natural Real = Natural.Zero;
 		/// <summary>
 		/// This is imaginary part
 		/// </summary>
 		[Aliases("Imaginary", "虚部", "HighDimension", "高维")]
-		public Natural Imaginary = Natural.Zero;
+		public readonly Natural Imaginary = Natural.Zero;
 
-		public NaturalComplex(Natural Real=null, Natural Imaginary = null)
+		public virtual Infinite FlatValue => this.Real + Infinite.TheInfinite * this.Imaginary;
+
+		public virtual Real Theta => new Real(Math.Atan2((double)this.Imaginary.Value, (double)this.Real.Value));
+		
+		public virtual Real Length => new Real(Math.Sqrt((double)this.Real.Value * (double)this.Real.Value + (double)this.Imaginary.Value * (double)this.Imaginary.Value));
+		
+		public NaturalComplex(Natural Real = null, Natural Imaginary = null)
 		{
 			this.Real = Real ?? this.Real;
 			this.Imaginary = Imaginary ?? this.Imaginary;
-
 		}
 	}
 
-	public delegate Infinite RotateOperation();
+	public delegate LinearNumber RotateOp(LinearNumber n);
+
 
 	/// <summary>
 	/// Infinite is a kind of Number
 	/// </summary>
 	[Aliases(
-		"Infinite","无穷","无穷大"
+		"Infinite", "无穷", "无穷大"
 	)]
-	public class Infinite : SignedNumber
+	public class Infinite : LinearNumber
 	{
 		public static readonly Infinite TheInfinite = new Infinite();
 
-		public static RotateOperation I => () => TheInfinite;
-		
+		/// <summary>
+		/// IOP is a rotate operation (function or operator)
+		/// </summary>
+		public static RotateOp IOP => (n) => (TheInfinite - Real.One) * n;
+
+		/// <summary>
+		/// I is the value represents the rotated 1.
+		/// </summary>
+		public static LinearNumber I = IOP(Real.One);
+
+		/// <summary>
+		/// I^2 is the value represents the rotated rotated 1, 
+		/// this is -1.
+		/// </summary>
+		public static LinearNumber MinusOne = IOP(IOP(Real.One));
+
+		public static Infinite operator +(Infinite infinite, LinearNumber n)
+		{
+			return infinite;
+		}
+		public static Infinite operator -(Infinite infinite, LinearNumber n)
+		{
+			return infinite;
+		}
+		public static Infinite operator *(Infinite infinite, LinearNumber n)
+		{
+			return infinite;
+		}
+
+
 		public static implicit operator Zero(Infinite infinite)
 		{
 			return new Zero(infinite.Existences.ToArray());
@@ -512,7 +588,7 @@ namespace Ontology
 
 		public static implicit operator float(Infinite infinity)
 		{
-			return infinity == null ? float.Epsilon : (infinity.IsNotNegative ? float.PositiveInfinity: float.NegativeInfinity);
+			return infinity == null ? float.Epsilon : (infinity.IsNotNegative ? float.PositiveInfinity : float.NegativeInfinity);
 		}
 
 		public static implicit operator double(Infinite infinity)
@@ -526,7 +602,7 @@ namespace Ontology
 		}
 
 		public Infinite(params Existence[] existences)
-			:base(existences)
+			: base(existences)
 		{
 
 		}
@@ -538,13 +614,24 @@ namespace Ontology
 	[Aliases(
 		"Zero", "0"
 	)]
-	public class Zero : SignedNumber
+	public class Zero : LinearNumber
 	{
+		public override bool IsOrigin => true;
+
 		public static readonly Zero TheZero = new Zero();
 
 		public static implicit operator Infinite(Zero zero)
 		{
-			return new Infinite(zero.Existences.ToArray());
+			return new Infinite(zero?.Existences.ToArray());
+		}
+
+		public static implicit operator Zero(Void @void)
+		{
+			return new Zero(@void?.Existences.ToArray());
+		}
+		public static implicit operator Void(Zero zero)
+		{
+			return new Void(zero?.Existences.ToArray());
 		}
 
 		public static implicit operator byte(Zero zero)
@@ -604,11 +691,9 @@ namespace Ontology
 
 
 		public Zero(params Existence[] existences)
-			:base(existences)
+			: base(existences)
 		{
 
 		}
 	}
-
-
 }
