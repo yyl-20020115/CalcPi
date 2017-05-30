@@ -249,20 +249,38 @@ namespace Ontology
 	/// <summary>
 	/// Number is a kind of Being
 	/// </summary>
+	[Aliases("Number","数")]
 	public abstract class Number: Being
 	{
 		public virtual object NumberValue { get; set; }
 	}
 
+	[Aliases("SignedNumber","有符号数")]
 	public abstract class SignedNumber : Number
 	{
 		public virtual bool IsPositive { get; set; } = true;
 	}
+
+	[Aliases("Integer", "整数")]
 	public class Integer: SignedNumber
 	{
-		public static readonly Integer Zero = new Integer();
+		public static readonly Integer Zero = new Integer(0);
+		public static readonly Integer One = new Integer(1);
+		public static readonly Integer MinusOne = new Integer(-1);
 
 		public BigInteger Value =BigInteger.Zero;
+
+		public override bool IsPositive
+		{
+			get => this.Value>=0;
+			set
+			{
+				if(value && this.Value < 0 || !value && this.Value >= 0)
+				{
+					this.Value = -this.Value;
+				}
+			}
+		}
 
 		public override object NumberValue {
 			get => this.Value;
@@ -275,13 +293,37 @@ namespace Ontology
 			}
 		}
 
+		public Integer(int value = 0)
+			:this((BigInteger)value)
+		{
+
+		}
+		public Integer(BigInteger value)
+		{
+			this.Value = value;
+		}
 	}
 
+	[Aliases("Real", "实数")]
 	public class Real : SignedNumber
 	{
-		public static  readonly Real Zero = new Real();
+		public static readonly Real Zero = new Real(0.0);
+		public static readonly Real One = new Real(1.0);
+		public static readonly Real MinusOne = new Real(-1.0);
 
 		public double Value = 0.0;
+
+		public override bool IsPositive
+		{
+			get => this.Value >= 0;
+			set
+			{
+				if (value && this.Value < 0 || !value && this.Value >= 0)
+				{
+					this.Value = -this.Value;
+				}
+			}
+		}
 
 		public override object NumberValue
 		{
@@ -294,30 +336,86 @@ namespace Ontology
 				}
 			}
 		}
+
+		public Real(double value = 0.0)
+		{
+			this.Value = value;
+		}
 	}
 
+	[Aliases("Rational", "有理数")]
 	public class Rational: Real
 	{
+		public Rational(double value = 0.0)
+			:base(value)
+		{
 
+		}
 	}
 
+	[Aliases("Irrational", "无理数")]
 	public class Irrational : Real
 	{
+		public static double CalcPi(ulong n = 1, ulong max = 100)
+		{
+			return n < max
+				? 2.0 + (1.0 * n / (2.0 * n + 1.0) * CalcPi(n + 1, max))
+				: 2.0 * max + 1.0;
+		}
+		public static double CalcE(ulong n = 1, ulong max = 100, double x = 1.0)
+		{
+			return n == 0 || n >= max
+				? 1.0
+				: 1.0 + x / n * CalcE(n + 1, max, x);
+		}
+		public static Irrational Pi = new Irrational(CalcPi());
+		public static Irrational E = new Irrational(CalcE());
 
+		public Irrational(double value = 0.0)
+			:base(value)
+		{
 
+		}
 	}
 
+
+	[Aliases("Natural","自然数")]
 	public class Natural: Integer
 	{
-		public static new readonly Natural Zero = new Natural();
+		public static new readonly Natural Zero = new Natural(0);
 
-		public override bool IsPositive => true;
+		public static new readonly Natural One = new Natural(1);
+
+		public override bool IsPositive
+		{
+			get => true;
+			set
+			{
+				throw new InvalidOperationException("unable to set natural number to negative");
+			}
+		}
+
+		public Natural(uint value = 0)
+			:this((BigInteger)value)
+		{
+
+		}
+		public Natural(BigInteger value)
+		{
+			if (value < 0)
+				throw new ArgumentOutOfRangeException(nameof(value));
+			this.Value = value;
+		}
 	}
 
-	[Aliases("RealComplex", "复数", "实复数")]
-	public class RealComplex : Number
+	[Aliases("Complex", "复数", "实复数")]
+	public class Complex : Number
 	{
-		public static readonly RealComplex Zero = new RealComplex();
+		public static readonly Complex Zero = new Complex();
+		public static readonly Complex One = new Complex(Real.One);
+		public static readonly Complex MinusOne = new Complex(Real.MinusOne);
+		public static readonly Complex I = new Complex(Real.Zero, Real.One);
+		public static readonly Complex MinusI = new Complex(Real.Zero, Real.MinusOne);
 
 		/// <summary>
 		/// This is real part
@@ -329,12 +427,21 @@ namespace Ontology
 		/// </summary>
 		[Aliases("Imaginary","虚部", "HighDimension","高维")]
 		public Real Imaginary = Real.Zero;
+
+		public Complex(Real Real = null, Real Imaginary = null)
+		{
+			this.Real = Real ?? this.Real;
+			this.Imaginary = Imaginary ?? this.Imaginary;
+		}
 	}
 
 	[Aliases("NaturalComplex", "自然复数")]
 	public class NaturalComplex: Number
 	{
 		public static readonly NaturalComplex Zero = new NaturalComplex();
+		public static readonly NaturalComplex One = new NaturalComplex(Natural.One);
+		public static readonly NaturalComplex J = new NaturalComplex(Natural.Zero, Natural.One);
+		public static readonly NaturalComplex OneJ = new NaturalComplex(Natural.One,Natural.One);
 
 		/// <summary>
 		/// This is real part
@@ -346,6 +453,13 @@ namespace Ontology
 		/// </summary>
 		[Aliases("Imaginary", "虚部", "HighDimension", "高维")]
 		public Natural Imaginary = Natural.Zero;
+
+		public NaturalComplex(Natural Real=null, Natural Imaginary = null)
+		{
+			this.Real = Real ?? this.Real;
+			this.Imaginary = Imaginary ?? this.Imaginary;
+
+		}
 	}
 
 	/// <summary>
@@ -356,8 +470,6 @@ namespace Ontology
 	)]
 	public class Infinite : SignedNumber
 	{
-		public override bool IsPositive => true;
-
 		public static implicit operator byte(Infinite infinity)
 		{
 			return byte.MaxValue;
