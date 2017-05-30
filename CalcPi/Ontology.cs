@@ -14,15 +14,13 @@ namespace Ontology
 	[System.AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
 	public class AliasesAttribute : Attribute
 	{
-		readonly string[] aliases;
+		protected string[] aliases;
+		public string[] Aliases => this.aliases;
 
-		// This is a positional argument
 		public AliasesAttribute(params string[] aliases)
 		{
 			this.aliases = aliases;
 		}
-
-		public string[] Aliases => this.aliases;
 	}
 
 	/// <summary>
@@ -65,6 +63,29 @@ namespace Ontology
 		{
 			return existence;
 		}
+
+		/// <summary>
+		/// Existences equal when the are referencing same object.
+		/// </summary>
+		/// <param name="e1"></param>
+		/// <param name="e2"></param>
+		/// <returns></returns>
+		public static bool operator ==(Existence e1, Existence e2)
+		{
+			return object.ReferenceEquals(e1,e2);
+		}
+		/// <summary>
+		/// Existences do not equal when the are referencing same object,
+		/// this means, it is not itself.
+		/// </summary>
+		/// <param name="e1"></param>
+		/// <param name="e2"></param>
+		/// <returns></returns>
+		public static bool operator !=(Existence e1, Existence e2)
+		{
+			return object.ReferenceEquals(e1, e2);
+		}
+
 		/// <summary>
 		/// Inner storage of the members.
 		/// </summary>
@@ -247,18 +268,31 @@ namespace Ontology
 	}
 
 	/// <summary>
-	/// Number is a kind of Being
+	/// Number is a kind of Being which has a property named 
+	/// NumberValue. This value is originally the count of 
+	/// the sub existences.
 	/// </summary>
 	[Aliases("Number","数")]
 	public abstract class Number: Being
 	{
-		public virtual object NumberValue { get; set; }
+		public virtual object NumberValue => this.Existences.Count;
+		public Number(params Existence[] existences)
+			:base(existences)
+		{
+
+		}
 	}
 
 	[Aliases("SignedNumber","有符号数")]
 	public abstract class SignedNumber : Number
 	{
-		public virtual bool IsPositive { get; set; } = true;
+		public virtual bool IsNotNegative { get; } = true;
+
+		public SignedNumber(params Existence[] existences)
+			:base(existences)
+		{
+
+		}
 	}
 
 	[Aliases("Integer", "整数")]
@@ -268,30 +302,11 @@ namespace Ontology
 		public static readonly Integer One = new Integer(1);
 		public static readonly Integer MinusOne = new Integer(-1);
 
-		public BigInteger Value =BigInteger.Zero;
+		public readonly BigInteger Value = BigInteger.Zero;
 
-		public override bool IsPositive
-		{
-			get => this.Value>=0;
-			set
-			{
-				if(value && this.Value < 0 || !value && this.Value >= 0)
-				{
-					this.Value = -this.Value;
-				}
-			}
-		}
+		public override bool IsNotNegative => this.Value >= 0;
 
-		public override object NumberValue {
-			get => this.Value;
-			set
-			{
-				if(value is BigInteger bi)
-				{
-					this.Value = bi;
-				}
-			}
-		}
+		public override object NumberValue => this.Value;
 
 		public Integer(int value = 0)
 			:this((BigInteger)value)
@@ -311,31 +326,11 @@ namespace Ontology
 		public static readonly Real One = new Real(1.0);
 		public static readonly Real MinusOne = new Real(-1.0);
 
-		public double Value = 0.0;
+		public readonly double Value = 0.0;
 
-		public override bool IsPositive
-		{
-			get => this.Value >= 0;
-			set
-			{
-				if (value && this.Value < 0 || !value && this.Value >= 0)
-				{
-					this.Value = -this.Value;
-				}
-			}
-		}
+		public override bool IsNotNegative => this.Value >= 0.0;
 
-		public override object NumberValue
-		{
-			get => this.Value;
-			set
-			{
-				if (value is double d)
-				{
-					this.Value = d;
-				}
-			}
-		}
+		public override object NumberValue => this.Value;
 
 		public Real(double value = 0.0)
 		{
@@ -346,10 +341,15 @@ namespace Ontology
 	[Aliases("Rational", "有理数")]
 	public class Rational: Real
 	{
-		public Rational(double value = 0.0)
-			:base(value)
-		{
+		public readonly Real Numerator = Real.Zero;
+		public readonly Real Denominator = Real.One;
 
+		public Rational(Real Numerator = null, Real Denominator = null)
+			:base((Numerator =(Numerator ?? Real.Zero)).Value
+				 /((Denominator=(Denominator ?? Real.One)).Value))
+		{
+			this.Numerator = Numerator;
+			this.Denominator = Denominator;
 		}
 	}
 
@@ -383,17 +383,9 @@ namespace Ontology
 	public class Natural: Integer
 	{
 		public static new readonly Natural Zero = new Natural(0);
-
 		public static new readonly Natural One = new Natural(1);
 
-		public override bool IsPositive
-		{
-			get => true;
-			set
-			{
-				throw new InvalidOperationException("unable to set natural number to negative");
-			}
-		}
+		public override bool IsNotNegative => true;
 
 		public Natural(uint value = 0)
 			:this((BigInteger)value)
@@ -401,10 +393,8 @@ namespace Ontology
 
 		}
 		public Natural(BigInteger value)
+			:base(value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value)))
 		{
-			if (value < 0)
-				throw new ArgumentOutOfRangeException(nameof(value));
-			this.Value = value;
 		}
 	}
 
@@ -441,7 +431,7 @@ namespace Ontology
 		public static readonly NaturalComplex Zero = new NaturalComplex();
 		public static readonly NaturalComplex One = new NaturalComplex(Natural.One);
 		public static readonly NaturalComplex J = new NaturalComplex(Natural.Zero, Natural.One);
-		public static readonly NaturalComplex OneJ = new NaturalComplex(Natural.One,Natural.One);
+		public static readonly NaturalComplex OneAndJ = new NaturalComplex(Natural.One,Natural.One);
 
 		/// <summary>
 		/// This is real part
@@ -462,6 +452,8 @@ namespace Ontology
 		}
 	}
 
+	public delegate Infinite RotateOperation();
+
 	/// <summary>
 	/// Infinite is a kind of Number
 	/// </summary>
@@ -470,6 +462,14 @@ namespace Ontology
 	)]
 	public class Infinite : SignedNumber
 	{
+		public static readonly Infinite TheInfinite = new Infinite();
+
+		public static RotateOperation I => () => TheInfinite;
+		
+		public static implicit operator Zero(Infinite infinite)
+		{
+			return new Zero(infinite.Existences.ToArray());
+		}
 		public static implicit operator byte(Infinite infinity)
 		{
 			return byte.MaxValue;
@@ -477,7 +477,7 @@ namespace Ontology
 
 		public static implicit operator sbyte(Infinite infinity)
 		{
-			return infinity == null ? (sbyte)0 : (infinity.IsPositive ? sbyte.MaxValue : sbyte.MinValue);
+			return infinity == null ? (sbyte)0 : (infinity.IsNotNegative ? sbyte.MaxValue : sbyte.MinValue);
 		}
 
 		public static implicit operator ushort(Infinite infinity)
@@ -487,7 +487,7 @@ namespace Ontology
 
 		public static implicit operator short(Infinite infinity)
 		{
-			return infinity == null ? (short)0 : (infinity.IsPositive ? short.MaxValue : short.MinValue);
+			return infinity == null ? (short)0 : (infinity.IsNotNegative ? short.MaxValue : short.MinValue);
 		}
 
 		public static implicit operator uint(Infinite infinity)
@@ -497,7 +497,7 @@ namespace Ontology
 
 		public static implicit operator int(Infinite infinity)
 		{
-			return infinity == null ? (int)0 : (infinity.IsPositive ? int.MaxValue : int.MinValue);
+			return infinity == null ? (int)0 : (infinity.IsNotNegative ? int.MaxValue : int.MinValue);
 		}
 
 		public static implicit operator ulong(Infinite infinity)
@@ -507,24 +507,29 @@ namespace Ontology
 
 		public static implicit operator long(Infinite infinity)
 		{
-			return infinity == null ? (long)0 : (infinity.IsPositive ? long.MaxValue : long.MinValue);
+			return infinity == null ? (long)0 : (infinity.IsNotNegative ? long.MaxValue : long.MinValue);
 		}
 
 		public static implicit operator float(Infinite infinity)
 		{
-			return infinity == null ? float.Epsilon : (infinity.IsPositive ? float.PositiveInfinity: float.NegativeInfinity);
+			return infinity == null ? float.Epsilon : (infinity.IsNotNegative ? float.PositiveInfinity: float.NegativeInfinity);
 		}
 
 		public static implicit operator double(Infinite infinity)
 		{
-			return infinity == null ? double.Epsilon : (infinity.IsPositive ? double.PositiveInfinity : double.NegativeInfinity);
+			return infinity == null ? double.Epsilon : (infinity.IsNotNegative ? double.PositiveInfinity : double.NegativeInfinity);
 		}
 
 		public static implicit operator decimal(Infinite infinity)
 		{
-			return infinity == null ? decimal.Zero : (infinity.IsPositive ? decimal.MaxValue : decimal.MinValue);
+			return infinity == null ? decimal.Zero : (infinity.IsNotNegative ? decimal.MaxValue : decimal.MinValue);
 		}
 
+		public Infinite(params Existence[] existences)
+			:base(existences)
+		{
+
+		}
 	}
 
 	/// <summary>
@@ -535,6 +540,13 @@ namespace Ontology
 	)]
 	public class Zero : SignedNumber
 	{
+		public static readonly Zero TheZero = new Zero();
+
+		public static implicit operator Infinite(Zero zero)
+		{
+			return new Infinite(zero.Existences.ToArray());
+		}
+
 		public static implicit operator byte(Zero zero)
 		{
 			return byte.MinValue;
@@ -588,6 +600,13 @@ namespace Ontology
 		public static implicit operator decimal(Zero zero)
 		{
 			return decimal.Zero;
+		}
+
+
+		public Zero(params Existence[] existences)
+			:base(existences)
+		{
+
 		}
 	}
 
