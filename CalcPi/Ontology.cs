@@ -63,6 +63,10 @@ namespace Ontology
 		{
 			return existence;
 		}
+		public static Existence operator !(Existence existence)
+		{
+			return existence;
+		}
 
 		/// <summary>
 		/// Existences equal when the are referencing same object.
@@ -96,10 +100,7 @@ namespace Ontology
 		public virtual ISet<Existence> Existences
 		{
 			get => this.existences ?? (this.existences = new HashSet<Existence>());
-			set
-			{
-				this.existences = value ?? new HashSet<Existence>();
-			}
+			set => this.existences = value ?? new HashSet<Existence>();
 		}
 
 		public Existence(params Existence[] existences)
@@ -110,7 +111,27 @@ namespace Ontology
 			this.existences = new HashSet<Existence>(existences);
 		}
 		/// <summary>
-		/// Natures equal only when natures equals (no order)
+		/// Existence is not any object (including self),
+		/// although it is derived from object.
+		/// </summary>
+		/// <param name="o"></param>
+		/// <returns></returns>
+		public virtual bool Is(object o)
+		{
+			return false;
+		}
+		/// <summary>
+		/// Existence is any object (including self),
+		/// as well.
+		/// </summary>
+		/// <param name="o"></param>
+		/// <returns></returns>
+		public virtual bool IsNot(object o)
+		{
+			return false;
+		}
+		/// <summary>
+		/// Existence equal only when sub Existences equals (no order)
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
@@ -122,12 +143,12 @@ namespace Ontology
 
 		public override int GetHashCode()
 		{
-			return this.Existences.Aggregate(0, (a, n) => a.GetHashCode() ^ n.GetHashCode());
+			return this.Existences.Aggregate(0, (a, e) => a ^ e.GetHashCode());
 		}
 
 		public override string ToString()
 		{
-			return "(" + string.Join(",", this.Existences.Select(n => n.ToString())) + ")";
+			return "(" + string.Join(",", this.Existences.Select(e => e.ToString())) + ")";
 		}
 	}
 
@@ -146,6 +167,10 @@ namespace Ontology
 		{
 			return nature;
 		}
+		public static Nature operator !(Nature nature)
+		{
+			return nature;
+		}
 
 		/// <summary>
 		/// It exists as it does not
@@ -155,13 +180,19 @@ namespace Ontology
 		/// <summary>
 		/// Unknown beginning.
 		/// </summary>
-		public DateTime? Beginning = null;
+		public readonly DateTime? Beginning = null;
 
 		public Nature(params Existence[] existences)
 			: base(existences)
 		{
 
 		}
+		public Nature(DateTime? beginning = null, params Existence[] existences)
+			: this(existences)
+		{
+			this.Beginning = beginning;
+		}
+
 	}
 
 	/// <summary>
@@ -284,28 +315,26 @@ namespace Ontology
 
 		}
 	}
-
+	[Aliases("LinearNumber", "线性数")]
 	public class LinearNumber : Number
 	{
 		public virtual bool IsZero { get; } = false;
 
 		public virtual bool IsPositive { get; } = true;
 
-		public LinearNumber(params Existence[] existences)
+		public LinearNumber(bool IsPositive = true, params Existence[] existences)
 			: base(existences)
 		{
-
+			this.IsPositive = IsPositive;
 		}
 	}
-	public class StructuralNumber : Number
+
+	[Aliases("FiniteNumber", "有限数")]
+	public class FiniteNumber : LinearNumber
 	{
 
 	}
 
-	public class FiniteNumber: LinearNumber
-	{
-
-	}
 	[Aliases("Integer", "整数")]
 	public class Integer : FiniteNumber
 	{
@@ -433,6 +462,11 @@ namespace Ontology
 		}
 	}
 
+	[Aliases("StructuralNumber", "结构数")]
+	public class StructuralNumber : Number
+	{
+
+	}
 	[Aliases("Complex", "复数", "实复数")]
 	public class Complex : StructuralNumber
 	{
@@ -493,9 +527,9 @@ namespace Ontology
 		public virtual Infinite FlatValue => this.Real + Infinite.TheInfinite * this.Imaginary;
 
 		public virtual Real Theta => new Real(Math.Atan2((double)this.Imaginary.Value, (double)this.Real.Value));
-		
+
 		public virtual Real Length => new Real(Math.Sqrt((double)this.Real.Value * (double)this.Real.Value + (double)this.Imaginary.Value * (double)this.Imaginary.Value));
-		
+
 		public NaturalComplex(Natural Real = null, Natural Imaginary = null)
 		{
 			this.Real = Real ?? this.Real;
@@ -503,19 +537,17 @@ namespace Ontology
 		}
 	}
 
+	[Aliases("RotateOp", "旋转操作")]
 	public delegate LinearNumber RotateOp(LinearNumber n);
 
-
 	/// <summary>
-	/// Infinite is a kind of Number
+	/// Infinite is a kind of LinearNumber
 	/// </summary>
 	[Aliases(
 		"Infinite", "无穷", "无穷大"
 	)]
 	public class Infinite : LinearNumber
 	{
-		public new virtual bool IsPositive { get; set; } = true;
-
 		public override bool IsZero => false;
 
 		public static readonly Infinite TheInfinite = new Infinite();
@@ -548,14 +580,15 @@ namespace Ontology
 		{
 			return infinite;
 		}
-		public Infinite(bool IsPositive = true)
+		public Infinite(bool IsPositive = true, params Existence[] existences)
+			: base(IsPositive, existences)
 		{
-			this.IsPositive = IsPositive;
 		}
 
 		public static implicit operator Zero(Infinite infinite)
 		{
-			return new Zero(infinite.Existences.ToArray());
+			return infinite == null ? null
+				: new Zero(!infinite.IsPositive, infinite.Existences.ToArray());
 		}
 		public static implicit operator byte(Infinite infinity)
 		{
@@ -611,45 +644,38 @@ namespace Ontology
 		{
 			return infinity == null ? decimal.Zero : (infinity.IsPositive ? decimal.MaxValue : decimal.MinValue);
 		}
-
-		public Infinite(params Existence[] existences)
-			: base(existences)
-		{
-
-		}
 	}
 
 	/// <summary>
-	/// Zero is a kind of Number, but you can treat it as void
+	/// Zero is a kind of LinearNumber, but you can treat it as void too.
 	/// </summary>
 	[Aliases(
 		"Zero", "0"
 	)]
 	public class Zero : LinearNumber
 	{
-		public new virtual bool IsPositive { get; set; } = true;
-		
 		public override bool IsZero => true;
 
-		public Zero(bool IsPositive = true)
+		public Zero(bool IsPositive = true, params Existence[] existences)
+			: base(IsPositive, existences)
 		{
-			this.IsPositive = IsPositive;
 		}
 
 		public static readonly Zero TheZero = new Zero();
 
 		public static implicit operator Infinite(Zero zero)
 		{
-			return new Infinite(zero?.Existences.ToArray());
+			return zero == null ? null :
+				new Infinite(!zero.IsPositive, zero.Existences.ToArray());
 		}
 
 		public static implicit operator Zero(Void @void)
 		{
-			return new Zero(@void?.Existences.ToArray());
+			return @void == null ? new Zero() : new Zero(true, @void.Existences.ToArray());
 		}
 		public static implicit operator Void(Zero zero)
 		{
-			return new Void(zero?.Existences.ToArray());
+			return zero == null ? new Void() : new Void(zero.Existences.ToArray());
 		}
 
 		public static implicit operator byte(Zero zero)
@@ -705,13 +731,6 @@ namespace Ontology
 		public static implicit operator decimal(Zero zero)
 		{
 			return decimal.Zero;
-		}
-
-
-		public Zero(params Existence[] existences)
-			: base(existences)
-		{
-
 		}
 	}
 }
