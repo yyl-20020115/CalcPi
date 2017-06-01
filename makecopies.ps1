@@ -1,17 +1,13 @@
-$excludes = @(".vs",".git")
-
 $source = "."
 
+$excludes = @(".vs",".git")
+
 $dests = @(
-	"E:\Working\",
-	"C:\Users\yyl_2\OneDrive\ÎÄµµ\",
-	"\\YILIN-SUPOWER\Working2\Theory\",
-	"\\YILIN-SUPOWER\Working-dev\"
+	"E:\Working\CalcPi",
+	"G:\Working\CalcPi",
+	"C:\Users\yyl_2\OneDrive\ÎÄµµ\CalcPi",
+	"\\YILIN-SUPOWER\Working2\Theory\CalcPi",
+	"\\YILIN-SUPOWER\Working-dev\CalcPi"
 )
 
-foreach($dirName in $dests)
-{
-    Get-ChildItem $source -Directory | 
-        Where-Object{$_.Name -notin $excludes} | 
-        Copy-Item -Destination $dirName -Recurse -Force
-}
+$dests | ForEach-Object {  Get-ChildItem $source | Copy-Item -Destination (New-ITem $_ -ItemType "Directory" -Force) -Force -Recurse }
