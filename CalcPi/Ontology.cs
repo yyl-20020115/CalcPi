@@ -40,9 +40,9 @@ namespace Ontology
 	public abstract class Existence : Object
 	{
 		/// <summary>
-		/// The one and only (sole) existence is the nature itself.
+		/// The instance of an Existence is a Nature.
 		/// </summary>
-		public readonly static Existence Sole = new Nature();
+		public static Existence Instance => new Nature();
 
 		/// <summary>
 		/// It does not exist, this is its unique property.
@@ -489,9 +489,9 @@ namespace Ontology
 
 		public virtual Infinite FlatValue => this.Real + Infinite.TheInfinite * this.Imaginary;
 
-		public virtual Real Theta => new Real(Math.Atan2(this.Imaginary.Value, this.Real.Value));
+		public virtual Real Phase => new Real(Math.Atan2(this.Imaginary.Value, this.Real.Value));
 
-		public virtual Real Length => new Real(Math.Sqrt(this.Real.Value * this.Real.Value + this.Imaginary.Value * this.Imaginary.Value));
+		public virtual Real Magnitude => new Real(Math.Sqrt(this.Real.Value * this.Real.Value + this.Imaginary.Value * this.Imaginary.Value));
 
 		public Complex(Real Real = null, Real Imaginary = null)
 		{
@@ -552,23 +552,31 @@ namespace Ontology
 
 		public static readonly Infinite TheInfinite = new Infinite();
 
-		/// <summary>
-		/// IOP is a rotate operation (function or operator)
-		/// </summary>
-		public static RotateOp IOP => (n) => (TheInfinite - Real.One) * n;
+        public static LinearNumber I0 = Real.One;
+
+        /// <summary>
+        /// IOP is a rotate operation (function or operator)
+        /// </summary>
+        public static RotateOp IOP => (n) => (TheInfinite - I0) * n;
 
 		/// <summary>
 		/// I is the value represents the rotated 1.
 		/// </summary>
-		public static LinearNumber I1 = IOP(Real.One);
+		public static LinearNumber I1 = IOP(I0);
 
-		/// <summary>
-		/// I^2 is the value represents the rotated rotated 1, 
-		/// this is -1.
-		/// </summary>
-		public static LinearNumber I2 = IOP(IOP(Real.One));
+        public static LinearNumber I = I1;
 
-		public static Infinite operator +(Infinite infinite, LinearNumber n)
+        /// <summary>
+        /// I^2 is the value represents the rotated rotated 1, 
+        /// this is -1.
+        /// </summary>
+        public static LinearNumber I2 = IOP(I1);// = IOP(IOP(I0));// = -I0;
+
+        public static LinearNumber I3 = IOP(I2);// = IOP(IOP(IOP(IO)));// = -I0/I = -I1;
+
+        public static LinearNumber I4 = IOP(I3);// = I0;
+
+        public static Infinite operator +(Infinite infinite, LinearNumber n)
 		{
 			return infinite;
 		}
