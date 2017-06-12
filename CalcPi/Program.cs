@@ -9,6 +9,15 @@ namespace CalcPi
 {
     class Program
     {
+        double Zeta(double s = 0.0, ulong max = 100, ulong n = 1)
+        {
+            double sum = 0.0;
+            for (ulong t = n; t <= max; t++)
+            {
+                sum += Math.Pow(t, -s);
+            }
+            return sum;
+        }
         /// <summary>
         /// Pi = 2 + (1/3)(2+(2/5)(2+(3/7(...))))
         /// Pi(n) = 2 + (n/(2*n+1))Pi(n+1) (n&lt;=max)
@@ -88,13 +97,22 @@ namespace CalcPi
             Trace.WriteLine(E(1, 100));
             Trace.WriteLine(OneLess(0, 100, 100));
             Trace.WriteLine(OneMore(0, 100, 100));
-            //PrintPi();
 
             N n1 = (P)1 * (P)2 * (P)3 * (P)5 * (P)7;
             N n2 = (P)(2, 3) * (3, 5);
 
             Console.WriteLine("n1= {0}", n1);
             Console.WriteLine("n2 = {0}", n2);
+
+            double s = 0.0;
+
+            Trace.WriteLine($"Zeta({s=1.0}) = " + Zeta(s,10000));
+
+            Trace.WriteLine($"Zeta({s=0.5}) = " + Zeta(s, 10000));
+
+            Trace.WriteLine($"Zeta({s=0.0}) = " + Zeta(s, 10000));
+
+            Trace.WriteLine($"Zeta({s=-1.0}) = " + Zeta(s, 10000));
 
         }
         void PrintPi(int c = 8400)
